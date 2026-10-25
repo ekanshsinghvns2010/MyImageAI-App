@@ -1,0 +1,61 @@
+# Local development stack: PostgreSQL + inference server + backend.
+# Usage: cp .env.example .env  (edit the REPLACE_ME values)  &&  docker compose up --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-myimageai}
+      POSTGRES_USER: ${POSTGRES_USER:-myimageai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-myimageai} -d ${POSTGRES_DB:-myimageai}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  inference:
+    build: ./inference-server
+    environment:
+      INFERENCE_ADAPTER: ${INFERENCE_ADAPTER:-mock}
+      INFERENCE_API_TOKEN: ${AI_INFERENCE_TOKEN:?set AI_INFERENCE_TOKEN in .env}
+      AI_MODEL_ID: ${AI_MODEL_ID:-myimageai-v1}
+      AI_MODEL_PATH: ${AI_MODEL_PATH:-/models/latest.pt}
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "127.0.0.1:8001:8001"
+    # GPU: add `deploy.resources.reservations.devices` (driver: nvidia) and use a CUDA base image in inference-server/Dockerfile.
+
+  backend:
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      inference:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-myimageai}
+      DB_USERNAME: ${POSTGRES_USER:-myimageai}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      ADMIN_BOOTSTRAP_API_KEY: ${ADMIN_BOOTSTRAP_API_KEY:?set ADMIN_BOOTSTRAP_API_KEY in .env}
+      URL_SIGNING_SECRET: ${URL_SIGNING_SECRET:?set URL_SIGNING_SECRET in .env}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      AI_PROVIDER: ${AI_PROVIDER:-python-http}
+      AI_INFERENCE_URL: ${AI_INFERENCE_URL:-http://inference:8001}
+      AI_INFERENCE_TOKEN: ${AI_INFERENCE_TOKEN}
+      AI_MODEL_ID: ${AI_MODEL_ID:-myimageai-v1}
+      STORAGE_LOCAL_PATH: /data/images
+    volumes:
+      - images:/data/images
+    ports:
+      - "8080:8080"
+    stop_grace_period: 60s
+
+volumes:
+  pgdata:
+  images:

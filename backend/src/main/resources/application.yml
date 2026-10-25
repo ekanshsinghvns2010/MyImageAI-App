@@ -1,0 +1,106 @@
+spring:
+  application:
+    name: myimageai
+  datasource:
+    # Development default: file-based H2 in PostgreSQL mode. Production: set DB_URL to a PostgreSQL JDBC URL.
+    url: ${DB_URL:jdbc:h2:file:./data/devdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none   # schema is owned by Flyway
+  flyway:
+    enabled: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: true
+  lifecycle:
+    timeout-per-shutdown-phase: 45s
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+  max-http-request-header-size: 16KB
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    include-exception: false
+  tomcat:
+    max-http-form-post-size: 64KB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          include: readinessState,db
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+
+app:
+  ai:
+    provider: ${AI_PROVIDER:mock}            # mock | python-http | remote-http
+    inference-url: ${AI_INFERENCE_URL:http://localhost:8001}
+    api-token: ${AI_INFERENCE_TOKEN:}
+    timeout-seconds: ${AI_TIMEOUT_SECONDS:120}
+    connect-timeout-seconds: ${AI_CONNECT_TIMEOUT_SECONDS:5}
+  models:
+    - id: ${AI_MODEL_ID:myimageai-v1}
+      display-name: MyImageAI v1
+      description: Custom-trained MyImageAI text-to-image model
+      version: "1"
+      min-width: ${AI_MIN_SIZE:256}
+      max-width: ${AI_MAX_SIZE:1024}
+      min-height: ${AI_MIN_SIZE:256}
+      max-height: ${AI_MAX_SIZE:1024}
+      dimension-multiple: ${AI_DIMENSION_MULTIPLE:8}
+      default-width: ${AI_DEFAULT_SIZE:512}
+      default-height: ${AI_DEFAULT_SIZE:512}
+      min-steps: 1
+      max-steps: ${AI_MAX_STEPS:50}
+      default-steps: ${AI_DEFAULT_STEPS:20}
+      max-images: ${AI_MAX_IMAGES:4}
+      max-prompt-length: ${AI_MAX_PROMPT_LENGTH:1000}
+      supports-negative-prompt: ${AI_SUPPORTS_NEGATIVE_PROMPT:true}
+      supports-seed: ${AI_SUPPORTS_SEED:true}
+  security:
+    admin-bootstrap-key: ${ADMIN_BOOTSTRAP_API_KEY:}
+    signing-secret: ${URL_SIGNING_SECRET:}
+    public-base-url: ${PUBLIC_BASE_URL:}
+    signed-url-ttl-seconds: ${SIGNED_URL_TTL_SECONDS:900}
+    default-rate-limit-per-minute: ${DEFAULT_RATE_LIMIT_PER_MINUTE:60}
+    default-daily-quota: ${DEFAULT_DAILY_QUOTA:200}
+    default-max-concurrent-jobs: ${DEFAULT_MAX_CONCURRENT_JOBS:2}
+  storage:
+    type: ${STORAGE_TYPE:local}
+    local-path: ${STORAGE_LOCAL_PATH:./data/images}
+    max-image-bytes: ${MAX_IMAGE_BYTES:20971520}
+    max-image-width: ${MAX_IMAGE_WIDTH:4096}
+    max-image-height: ${MAX_IMAGE_HEIGHT:4096}
+    retention-days: ${IMAGE_RETENTION_DAYS:30}
+  jobs:
+    worker-concurrency: ${WORKER_CONCURRENCY:2}
+    max-attempts: ${JOB_MAX_ATTEMPTS:3}
+    retry-backoff-millis: ${JOB_RETRY_BACKOFF_MILLIS:2000}
+    sync-wait-seconds: ${SYNC_WAIT_SECONDS:20}
+    shutdown-wait-seconds: ${JOB_SHUTDOWN_WAIT_SECONDS:30}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+  limits:
+    max-request-bytes: ${MAX_REQUEST_BYTES:65536}
+    history-max-page-size: 100

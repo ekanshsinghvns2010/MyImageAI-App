@@ -1,0 +1,67 @@
+### Works in IntelliJ HTTP Client and the VS Code "REST Client" extension.
+@host = http://localhost:8080
+@admin = PASTE_YOUR_ADMIN_BOOTSTRAP_API_KEY
+@key = PASTE_A_CLIENT_KEY_CREATED_BELOW
+@job = PASTE_A_JOB_ID
+
+### Health (public)
+GET {{host}}/api/v1/health
+
+### Create a client key (admin only). The secret is in "api_key" and is shown once.
+POST {{host}}/api/v1/admin/api-keys
+Authorization: Bearer {{admin}}
+Content-Type: application/json
+
+{ "name": "my-android-backend", "rate_limit_per_minute": 30, "daily_quota": 200, "max_concurrent_jobs": 2 }
+
+### List keys / revoke a key
+GET {{host}}/api/v1/admin/api-keys
+Authorization: Bearer {{admin}}
+
+###
+DELETE {{host}}/api/v1/admin/api-keys/PASTE_KEY_ID
+Authorization: Bearer {{admin}}
+
+### Models
+GET {{host}}/api/v1/models
+Authorization: Bearer {{key}}
+
+###
+GET {{host}}/api/v1/models/myimageai-v1
+Authorization: Bearer {{key}}
+
+### Submit (async): returns 202 and a job id
+POST {{host}}/api/v1/images/generations
+Authorization: Bearer {{key}}
+Idempotency-Key: demo-0001
+Content-Type: application/json
+
+{
+  "model": "myimageai-v1",
+  "prompt": "An original anime city at sunset, cinematic lighting",
+  "negative_prompt": "blurry, low quality",
+  "width": 512, "height": 512, "steps": 20, "seed": 42, "num_images": 1
+}
+
+### Submit and wait (bounded, ~20s): 200 if finished, else 202
+POST {{host}}/api/v1/images/generations?wait=true
+Authorization: Bearer {{key}}
+Content-Type: application/json
+
+{ "prompt": "a lighthouse in a storm", "width": 512, "height": 512, "steps": 10 }
+
+### Poll status
+GET {{host}}/api/v1/images/generations/{{job}}
+Authorization: Bearer {{key}}
+
+### Result (image URLs)
+GET {{host}}/api/v1/images/generations/{{job}}/result
+Authorization: Bearer {{key}}
+
+### History
+GET {{host}}/api/v1/images/generations/history?page=0&page_size=20&status=COMPLETED
+Authorization: Bearer {{key}}
+
+### Cancel (QUEUED jobs only)
+DELETE {{host}}/api/v1/images/generations/{{job}}
+Authorization: Bearer {{key}}

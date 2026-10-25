@@ -1,0 +1,47 @@
+# secrets and local config
+.env
+*.pem
+*.key
+
+# build output
+backend/build/
+backend/.gradle/
+backend/out/
+*.class
+*.jar
+.idea/
+*.iml
+
+# runtime data
+backend/data/
+data/
+models/*
+!models/.gitkeep
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+
+# Local secrets and machine-specific settings
+.env
+.env.*
+!.env.example
+**/local.properties
+*.jks
+*.keystore
+service-account*.json
+
+# Generated build files
+.gradle/
+**/.gradle/
+**/build/
+__pycache__/
+*.pyc
+
+# Python environments
+.venv/
+venv/
+
