@@ -1,51 +1,47 @@
 name: Build MyImageAI Android APK
 
 on:
-push:
-branches: [main]
-paths:
-- "android-app/**"
-- ".github/workflows/android-build.yml"
-workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "android-app/**"
+      - ".github/workflows/android-build.yml"
+  workflow_dispatch:
 
 permissions:
-contents: read
+  contents: read
 
 jobs:
-build:
-runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Set up Java
-    uses: actions/setup-java@v4
-    with:
-      distribution: temurin
-      java-version: "17"
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
 
-  - name: Set up Android SDK
-    uses: android-actions/setup-android@v3
-    with:
-      packages: "platform-tools platforms;android-35 build-tools;35.0.0"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-  - name: Set up Gradle 8.10.2
-    uses: gradle/actions/setup-gradle@v4
-    with:
-      gradle-version: "8.10.2"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
 
-  - name: Verify Gradle installation
-    run: gradle --version
+      - name: Build debug APK
+        working-directory: android-app
+        run: gradle --no-daemon assembleDebug
 
-  - name: Build debug APK
-    working-directory: android-app
-    run: gradle --no-daemon assembleDebug
-
-  - name: Upload APK artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: MyImageAI-debug-APK
-      path: android-app/app/build/outputs/apk/debug/app-debug.apk
-      if-no-files-found: error
-      retention-days: 14
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyImageAI-debug-APK
+          path: android-app/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
